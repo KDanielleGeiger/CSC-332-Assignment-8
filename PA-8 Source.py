@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from tkinter import *
 from functools import partial
 import matplotlib.pyplot as plot
@@ -143,7 +144,7 @@ def createMatrix(frameLeft, edges, nodes):
 
 
 ##  Output Adjacency List
-def adjList(nodes, edges):
+def formatAdjList(nodes, edges):
 
     strings = ["" for x in range(len(nodes))]
 
@@ -161,6 +162,96 @@ def adjList(nodes, edges):
         strings[x] += " -> /"
     return(strings)
 
+##  A Node is a list of its neighbors, combined with some state information.
+class Node(list):
+    WHITE = "white"
+    GREY = "grey"
+    BLACK = "black"
+
+##  When a node is instantiated it has no predecessor and is white.
+    def __init__(self, name, data=()):
+        self.name = name
+        self.color = self.WHITE
+        self.predecessor = None
+        self.firstTime = None
+        self.lastTime = None
+        self.time = None
+        list.__init__(self, data)
+
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        return self.name
+
+class AdjacencyList(OrderedDict):
+
+    def __init__(self, nodeNames, edges):
+        for name in set(nodeNames):
+            self[name] = Node(name)
+        
+        for edge in edges:
+            nameA, nameB = edge
+            self[nameA].append(self[nameB])
+            self[nameB].append(self[nameA])
+
+    def visit(self, node):
+        node.color = Node.GREY
+        node.firstTime = self.time
+        self.time += 1
+
+        self.visitHook(node)
+        for neighbor in node:
+            if neighbor.color == Node.WHITE:
+                neighbor.predecessor = node
+                self.visit(neighbor)
+
+        node.color = Node.BLACK
+        node.lastTime = self.time
+        self.time += 1
+
+    def dfs(self):
+        self.visitHook("(Initial state)")
+        self.time = 0
+        for name, node in self.items():
+            if node.color == Node.WHITE:
+                self.visit(node)
+        self.visitHook("(Final state)")
+
+##  If you need to change how the tracking tables get generated 
+##  or displayed, do it here.
+    def visitHook(self, arg):
+        if isinstance(arg, Node):
+            header = "(Visiting {})".format(arg.name)
+        else:
+            header = arg
+        print(header.center(90))
+        print(self.formatTrackingTable())
+        print()
+
+    def valueOrPlaceholder(self, value):
+        if value is None:
+            return '-'
+        else:
+            return str(value)
+
+    def formatTrackingTable(self):
+        columnTemplate = "\t{}\t"
+        header = 'Node\t\t'
+        color = 'Color\t\t'
+        predecessor = 'Predecessor\t'
+        firstTime = 'First Time\t'
+        lastTime = 'Last Time\t'
+
+        for node in self.values():
+            header += columnTemplate.format(node.name)
+            color  += columnTemplate.format(node.color)
+            predecessor += columnTemplate.format(self.valueOrPlaceholder(node.predecessor))
+            firstTime += columnTemplate.format(self.valueOrPlaceholder(node.firstTime))
+            lastTime += columnTemplate.format(self.valueOrPlaceholder(node.lastTime))
+
+        return '\n'.join((header, color, predecessor, firstTime, lastTime))
+
 ##  Submit user input
 def submit(frameLeft, frameRight, entry):
     ##  Check user entry
@@ -174,12 +265,17 @@ def submit(frameLeft, frameRight, entry):
     if valid == False:
         return
 
-    ##  Adjacent List
-    adjlist = adjList(nodes, edges)
+##  Create adjacency-list representation of the graph.
+    L = AdjacencyList(nodes, edges)
+##  Perform a depth-first traversal and print tracking tables.
+    L.dfs()
 
+    ##  Format adjacency List
+    adjlist = formatAdjList(nodes, edges)
 
     ##  Display results
     createMatrix(frameLeft, edges, nodes)
+
 
 if __name__ == '__main__':
     main()
