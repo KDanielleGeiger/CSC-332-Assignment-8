@@ -7,9 +7,13 @@ errorLbl = None
 adjMatrixLbl = None
 adjListLbl = None
 listbox = None
+listbox2 = None
+trackingLbl = None
+orderLbl = None
 
 def main():
     window = Tk()
+    window.geometry('900x550')
     window.title('Depth-first Search')
 
     ##  Left frame for user input and adjacency matrix
@@ -28,7 +32,7 @@ def main():
 
     button = Button(frameLeft, text='Submit')
     button.config(command=partial(submit, frameLeft, frameRight, entry))
-    button.grid(row=1, column=2, padx=(4,10), pady=(0,10))
+    button.grid(row=1, column=2, padx=(4,10), pady=(0,10), sticky=W)
 
     window.mainloop()
 
@@ -189,6 +193,43 @@ def displayAdjList(frameRight, adjList):
     for i in adjList:
         listbox.insert(END, i)
 
+##  Display tracking tables
+def displayTables(frameLeft, adjTables):
+    global listbox2
+    global trackingLbl
+
+    ##  Label the list as "Tracking Tables"
+    if trackingLbl == None:
+        trackingLbl = Label(frameLeft, text='Tracking Tables', fg='grey40')
+        trackingLbl.grid(row=4, column=0, columnspan=3, padx=(10,10), pady=(10,0))
+
+    ##  Display the list in the UI
+    if listbox2 == None:
+        listbox2 = Listbox(frameLeft, width=80, height=21, relief=FLAT)
+        scrollbar2 = Scrollbar(frameLeft, orient=VERTICAL)
+        listbox2.config(yscrollcommand=scrollbar2.set)
+        scrollbar2.config(command=listbox2.yview)
+        listbox2.grid(row=5, column=0, columnspan=3, padx=(10,10), pady=(0,10))
+        scrollbar2.grid(row=5, column=0, columnspan=3, padx=(10,10), pady=(0,10), sticky=E+NS)
+
+    ##  Add tables to the listbox
+    listbox2.delete(0, END)
+    for i in adjTables:
+        listbox2.insert(END, i)
+
+##  Display visit order
+def displayVisitOrder(frameLeft, order):
+    global orderLbl
+
+    order = 'Visit Order: %s' % order
+    
+    orderVar = StringVar()
+    orderVar.set(order)
+
+    if orderLbl == None:
+        orderLbl = Label(frameLeft, textvariable=orderVar, fg='blue')
+        orderLbl.grid(row=3, column=0, columnspan=3, padx=(10,10), pady=(80,0))
+
 ##  Submit user input
 def submit(frameLeft, frameRight, entry):
     ##  Check user entry
@@ -207,6 +248,10 @@ def submit(frameLeft, frameRight, entry):
     ##  Display adjacency list
     adjList = formatAdjList(nodes, edges)
     displayAdjList(frameRight, adjList)
+    ##  Display tracking tables
+    displayTables(frameLeft, ['Testing', '123'])
+    ##  Display visit order
+    displayVisitOrder(frameLeft, 'Testing 123')
 
 if __name__ == '__main__':
     main()
