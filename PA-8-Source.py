@@ -1,3 +1,4 @@
+import sys
 from tkinter import *
 from functools import partial
 import matplotlib.pyplot as plot
@@ -13,7 +14,7 @@ orderLbl = None
 
 def main():
     window = Tk()
-    window.geometry('900x550')
+    window.geometry('900x580')
     window.title('Depth-first Search')
 
     ##  Left frame for user input and adjacency matrix
@@ -23,6 +24,11 @@ def main():
     frameRight = Frame(window)
     frameRight.grid(row=0, column=1)
 
+    ##  Exit button
+    quitBtn = Button(frameRight, text='Quit')
+    quitBtn.config(command=partial(quitProgram, window))
+    quitBtn.grid(row=4, column=0, padx=(480,10), pady=(545,8), sticky=E)
+    
     ##  Create user input prompt
     lbl = Label(frameLeft, text='Enter a list of adjacent nodes (Ex: AB,BC,AC):', fg='grey40')
     lbl.grid(row=0, column=0, columnspan=2, padx=(10,10), pady=(10,0), sticky=W)
@@ -31,7 +37,7 @@ def main():
     entry.grid(row=1, column=0, columnspan=2, padx=(10,0), pady=(0,10), sticky=W)
 
     button = Button(frameLeft, text='Submit')
-    button.config(command=partial(submit, frameLeft, frameRight, entry))
+    button.config(command=partial(submit, frameLeft, frameRight, entry, quitBtn))
     button.grid(row=1, column=2, padx=(4,10), pady=(0,10), sticky=W)
 
     window.mainloop()
@@ -94,7 +100,7 @@ def displayError(frameLeft, valid, err):
         errVar.set(err)
 
         errorLbl = Label(frameLeft, textvariable=errVar, fg='red')
-        errorLbl.grid(row=2, column=0, padx=(10,10), sticky=W)
+        errorLbl.grid(row=2, column=0, columnspan=2, padx=(10,10), sticky=W)
 
 ##  Create and display the adjacency matrix
 def createMatrix(frameRight, edges, nodes):
@@ -230,8 +236,14 @@ def displayVisitOrder(frameLeft, order):
         orderLbl = Label(frameLeft, textvariable=orderVar, fg='blue')
         orderLbl.grid(row=3, column=0, columnspan=3, padx=(10,10), pady=(80,0))
 
+##  Exit the program
+def quitProgram(window):
+    plot.close('all')
+    window.destroy()
+    sys.exit()
+
 ##  Submit user input
-def submit(frameLeft, frameRight, entry):
+def submit(frameLeft, frameRight, entry, quitBtn):
     ##  Check user entry
     entry = entry.get()
     ##  Check and convert the input to something more useful
@@ -243,6 +255,10 @@ def submit(frameLeft, frameRight, entry):
     if valid == False:
         return
 
+    ##  Regrid the quit button before other UI elements are added
+    quitBtn.grid_forget()
+    quitBtn.grid(row=4, column=0, padx=(0,7), sticky=E)
+    
     ##  Display adjacency matrix
     createMatrix(frameRight, edges, nodes)
     ##  Display adjacency list
