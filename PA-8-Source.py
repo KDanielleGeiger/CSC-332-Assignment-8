@@ -5,15 +5,16 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 errorLbl = None
 adjMatrixLbl = None
+adjListLbl = None
+listbox = None
 
 def main():
     window = Tk()
-    window.geometry('380x520')
     window.title('Depth-first Search')
 
     ##  Left frame for user input and adjacency matrix
     frameLeft = Frame(window)
-    frameLeft.grid(row=0, column=0)
+    frameLeft.grid(row=0, column=0, sticky=N)
     ##  Right frame for adjacency list and other tables
     frameRight = Frame(window)
     frameRight.grid(row=0, column=1)
@@ -41,6 +42,7 @@ def convertEntry(entry):
     edges = []
     
     for i in entry:
+        i = i.strip()
         ##  Check that each edge connects exactly 2 nodes
         if len(i) != 2:
             valid = False
@@ -56,6 +58,9 @@ def convertEntry(entry):
             valid = False
             err = 'ERROR: There can\'t be 2 edges joining the same nodes.'
             break
+        if i[::-1] in edges:
+            valid = False
+            err = 'ERROR: There can\'t be 2 edges joining the same nodes.'
         ##  Add a node to the nodes array if necessary
         if i[0] not in nodes:
             nodes.append(i[0])
@@ -88,7 +93,7 @@ def displayError(frameLeft, valid, err):
         errorLbl.grid(row=2, column=0, padx=(10,10), sticky=W)
 
 ##  Create and display the adjacency matrix
-def createMatrix(frameLeft, edges, nodes):
+def createMatrix(frameRight, edges, nodes):
     plot.close('all')
 
     figure = plot.figure()
@@ -132,14 +137,57 @@ def createMatrix(frameLeft, edges, nodes):
     ##  Label the matrix as "Adjacency Matrix"
     global adjMatrixLbl
     if adjMatrixLbl == None:
-        adjMatrixLbl = Label(frameLeft, text='Adjacency Matrix', fg='grey40')
-        adjMatrixLbl.grid(row=3, column=0, columnspan=3, pady=(100,0))
+        adjMatrixLbl = Label(frameRight, text='Adjacency Matrix', fg='grey40')
+        adjMatrixLbl.grid(row=0, column=0, padx=(80,10), pady=(10,0))
 
     ##  Display the matrix in the UI
-    canvas = FigureCanvasTkAgg(figure, master=frameLeft)
+    canvas = FigureCanvasTkAgg(figure, master=frameRight)
     canvas.draw()
-    canvas.get_tk_widget().grid(row=4, column=0, columnspan=3, pady=(0,10))
+    canvas.get_tk_widget().grid(row=1, column=0, padx=(80,10), pady=(0,10))
     canvas.get_tk_widget().config(width=300, height=300)
+
+##  Output Adjacency List
+def formatAdjList(nodes, edges):
+    strings = ["" for x in range(len(nodes))]
+
+    for x in range (0, len(nodes)):
+        ## Add Node as start of list 
+        strings[x] += nodes[x] 
+        for y in range (0, len(edges)):
+            temp = edges[y]
+            ## If current Node exists in edge, then add the other node to the string
+            if(temp[0] == nodes[x]):
+                strings[x] += " ->" + temp[1]
+            elif(temp[1] == nodes[x]):
+                strings[x] += " ->" + temp[0]
+        ## End every string with this
+        strings[x] += " -> /"
+        
+    return(strings)
+
+##  Display Adjacency List
+def displayAdjList(frameRight, adjList):
+    global adjListLbl
+    global listbox
+
+    ##  Label the list as "Adjacency List"
+    if adjListLbl == None:
+        adjListLbl = Label(frameRight, text='Adjacency List', fg='grey40')
+        adjListLbl.grid(row=2, column=0, padx=(80,10), pady=(10,0))
+
+    ##  Display the listbox in the UI
+    if listbox == None:
+        listbox = Listbox(frameRight, width=50, relief=FLAT)
+        scrollbar = Scrollbar(frameRight, orient=VERTICAL)
+        listbox.config(yscrollcommand=scrollbar.set)
+        scrollbar.config(command=listbox.yview)
+        listbox.grid(row=3, column=0, padx=(80,10), pady=(0,10))
+        scrollbar.grid(row=3, column=0, padx=(80,10), pady=(0,10), sticky=E+NS)
+
+    ##  Add data to listbox
+    listbox.delete(0, END)
+    for i in adjList:
+        listbox.insert(END, i)
 
 ##  Submit user input
 def submit(frameLeft, frameRight, entry):
@@ -154,8 +202,11 @@ def submit(frameLeft, frameRight, entry):
     if valid == False:
         return
 
-    ##  Display results
-    createMatrix(frameLeft, edges, nodes)
+    ##  Display adjacency matrix
+    createMatrix(frameRight, edges, nodes)
+    ##  Display adjacency list
+    adjList = formatAdjList(nodes, edges)
+    displayAdjList(frameRight, adjList)
 
 if __name__ == '__main__':
     main()
