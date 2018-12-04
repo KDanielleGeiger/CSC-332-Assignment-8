@@ -1,5 +1,7 @@
 import sys
+from collections import OrderedDict
 from tkinter import *
+from tkinter.font import Font
 from functools import partial
 import matplotlib.pyplot as plot
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -11,6 +13,104 @@ listbox = None
 listbox2 = None
 trackingLbl = None
 orderLbl = None
+
+##  A Node is a list of its neighbors, combined with some state information.
+class Node(list):
+    WHITE = "white"
+    GREY = "grey"
+    BLACK = "black"
+
+##  When a node is instantiated it has no predecessor and is white.
+    def __init__(self, name, data=()):
+        self.name = name
+        self.color = self.WHITE
+        self.predecessor = None
+        self.firstTime = None
+        self.lastTime = None
+        self.time = None
+        list.__init__(self, data)
+
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        return self.name
+
+class AdjacencyList(OrderedDict):
+
+    def __init__(self, nodeNames, edges):
+        self.trackingTables = []
+        for name in set(nodeNames):
+            self[name] = Node(name)
+        
+        for edge in edges:
+            nameA, nameB = edge
+            self[nameA].append(self[nameB])
+            self[nameB].append(self[nameA])
+
+    def visit(self, node):
+        if node.color == Node.WHITE:
+            node.firstTime = self.time
+        node.color = Node.GREY
+        self.time += 1
+
+        self.visitHook(node)
+        for neighbor in node:
+            if neighbor.color == Node.WHITE:
+                neighbor.predecessor = node
+                self.visit(neighbor)
+
+        node.color = Node.BLACK
+        node.lastTime = self.time
+        self.time += 1
+
+    def getVisitOrder(self):
+        copy = list(x for x in self.values())
+        copy.sort(key=lambda n: n.firstTime)
+        return copy
+
+    def dfs(self):
+        self.visitHook("(Initial state)")
+        self.time = 0
+        for name, node in self.items():
+            if node.color == Node.WHITE:
+                self.visit(node)
+        self.visitHook("(Final state)")
+
+##  If you need to change how the tracking tables get generated 
+##  or displayed, do it here.
+    def visitHook(self, arg):
+        if isinstance(arg, Node):
+            header = "(Visiting {})".format(arg.name)
+        else:
+            header = arg
+        
+        table = self.formatTrackingTable()
+        table.insert(0, header.center(50))
+        self.trackingTables.append(table)
+
+    def valueOrPlaceholder(self, value):
+        if value is None:
+            return '-'
+        else:
+            return str(value)
+
+    def formatTrackingTable(self):
+        columnTemplate = "  {}  "
+        header =      'Node         '
+        color =       'Color        '
+        predecessor = 'Predecessor  '
+        firstTime =   'First Time   '
+        lastTime =    'Last Time    '
+
+        for node in self.values():
+            header += columnTemplate.format(node.name)
+            color  += columnTemplate.format(node.color[0])
+            predecessor += columnTemplate.format(self.valueOrPlaceholder(node.predecessor))
+            firstTime += columnTemplate.format(self.valueOrPlaceholder(node.firstTime))
+            lastTime += columnTemplate.format(self.valueOrPlaceholder(node.lastTime))
+
+        return [header, color, predecessor, firstTime, lastTime]
 
 def main():
     window = Tk()
@@ -211,7 +311,7 @@ def displayTables(frameLeft, adjTables):
 
     ##  Display the list in the UI
     if listbox2 == None:
-        listbox2 = Listbox(frameLeft, width=80, height=21, relief=FLAT)
+        listbox2 = Listbox(frameLeft, width=80, height=21, relief=FLAT, font=("Courier", "12"))
         scrollbar2 = Scrollbar(frameLeft, orient=VERTICAL)
         listbox2.config(yscrollcommand=scrollbar2.set)
         scrollbar2.config(command=listbox2.yview)
@@ -264,10 +364,18 @@ def submit(frameLeft, frameRight, entry, quitBtn):
     ##  Display adjacency list
     adjList = formatAdjList(nodes, edges)
     displayAdjList(frameRight, adjList)
+
+    ##  Run the algorithm
+    L = AdjacencyList(nodes, edges)
+    L.dfs()
+
     ##  Display tracking tables
-    displayTables(frameLeft, ['Testing', '123'])
+    allTableRows = []
+    for table in L.trackingTables:
+        allTableRows.extend(table)
+    displayTables(frameLeft, allTableRows)
     ##  Display visit order
-    displayVisitOrder(frameLeft, 'Testing 123')
+    displayVisitOrder(frameLeft, ', '.join(node.name for node in L.getVisitOrder()))
 
 if __name__ == '__main__':
     main()
