@@ -114,7 +114,7 @@ class AdjacencyList(OrderedDict):
 
 def main():
     window = Tk()
-    window.geometry('900x580')
+    window.geometry('900x590')
     window.title('Depth-first Search')
 
     ##  Left frame for user input and adjacency matrix
@@ -127,7 +127,7 @@ def main():
     ##  Exit button
     quitBtn = Button(frameRight, text='Quit')
     quitBtn.config(command=partial(quitProgram, window))
-    quitBtn.grid(row=4, column=0, padx=(480,10), pady=(545,8), sticky=E)
+    quitBtn.grid(row=4, column=0, padx=(480,10), pady=(557,8), sticky=E)
     
     ##  Create user input prompt
     lbl = Label(frameLeft, text='Enter a list of adjacent nodes (Ex: AB,BC,AC):', fg='grey40')
@@ -267,9 +267,9 @@ def formatAdjList(nodes, edges):
             temp = edges[y]
             ## If current Node exists in edge, then add the other node to the string
             if(temp[0] == nodes[x]):
-                strings[x] += " ->" + temp[1]
+                strings[x] += " -> " + temp[1]
             elif(temp[1] == nodes[x]):
-                strings[x] += " ->" + temp[0]
+                strings[x] += " -> " + temp[0]
         ## End every string with this
         strings[x] += " -> /"
         
@@ -287,7 +287,7 @@ def displayAdjList(frameRight, adjList):
 
     ##  Display the listbox in the UI
     if listbox == None:
-        listbox = Listbox(frameRight, width=50, relief=FLAT)
+        listbox = Listbox(frameRight, width=30, height=9, relief=FLAT, font=("Courier", "12"))
         scrollbar = Scrollbar(frameRight, orient=VERTICAL)
         listbox.config(yscrollcommand=scrollbar.set)
         scrollbar.config(command=listbox.yview)
@@ -311,7 +311,7 @@ def displayTables(frameLeft, adjTables):
 
     ##  Display the list in the UI
     if listbox2 == None:
-        listbox2 = Listbox(frameLeft, width=80, height=21, relief=FLAT, font=("Courier", "12"))
+        listbox2 = Listbox(frameLeft, width=48, height=18, relief=FLAT, font=("Courier", "12"))
         scrollbar2 = Scrollbar(frameLeft, orient=VERTICAL)
         listbox2.config(yscrollcommand=scrollbar2.set)
         scrollbar2.config(command=listbox2.yview)
@@ -332,9 +332,11 @@ def displayVisitOrder(frameLeft, order):
     orderVar = StringVar()
     orderVar.set(order)
 
-    if orderLbl == None:
-        orderLbl = Label(frameLeft, textvariable=orderVar, fg='blue')
-        orderLbl.grid(row=3, column=0, columnspan=3, padx=(10,10), pady=(80,0))
+    if orderLbl != None:
+        orderLbl.destroy()
+        
+    orderLbl = Label(frameLeft, textvariable=orderVar, fg='blue')
+    orderLbl.grid(row=3, column=0, columnspan=3, padx=(10,10), pady=(80,0))
 
 ##  Exit the program
 def quitProgram(window):
@@ -361,6 +363,7 @@ def submit(frameLeft, frameRight, entry, quitBtn):
     
     ##  Display adjacency matrix
     createMatrix(frameRight, edges, nodes)
+    
     ##  Display adjacency list
     adjList = formatAdjList(nodes, edges)
     displayAdjList(frameRight, adjList)
@@ -374,6 +377,7 @@ def submit(frameLeft, frameRight, entry, quitBtn):
     for table in L.trackingTables:
         allTableRows.extend(table)
     displayTables(frameLeft, allTableRows)
+    
     ##  Display visit order
     displayVisitOrder(frameLeft, ', '.join(node.name for node in L.getVisitOrder()))
 
